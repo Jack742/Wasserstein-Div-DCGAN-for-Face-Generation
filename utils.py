@@ -36,7 +36,7 @@ def get_dataloader(datafolder_path: str, img_size: int, batch_size: int) -> Data
     shuffle=True,
 )
 
-def load_model_weights(generator: nn.Module, discriminator: nn.Module, gen_weight_path: str, disc_weight_path: str, sample_interval: int) -> None:
+def load_model_weights(generator: nn.Module, discriminator: nn.Module, gen_weight_path: str, disc_weight_path: str, sample_interval: int) -> int:
     """
     loads model weights from file for generator and discriminator models
     || generator |-> generator model
@@ -44,17 +44,17 @@ def load_model_weights(generator: nn.Module, discriminator: nn.Module, gen_weigh
     || gen_weight_path |-> path to generator weights folder
     || disc_weight_path |-> path to discriminator weights folder
     || sample_interval |-> interval between image sampling. Used to calculate batches done so far
-    || returns None
+    || returns epoch to resume from
     """
     weights = sorted([each for each in os.listdir(gen_weight_path)], key=lambda x: int(x.split('_')[-1]))[-1]
     epoch_start = int(weights.split('_')[-1])
-    batches_done = epoch_start * sample_interval
     
-    print(f"###################################\nWEIGHTS_LOADED\nEpoch:{epoch_start}\nBatches Done: {batches_done}\n")
+    print(f"###################################\nWEIGHTS_LOADED\nEpoch:{epoch_start}\n")
 
     generator.load_state_dict(torch.load(f"{gen_weight_path}/{weights}"))
 
     weights = sorted([each for each in os.listdir(disc_weight_path) if 'disc' in each], key=lambda x: int(x.split('_')[-1]))[-1]
     discriminator.load_state_dict(torch.load(f"{disc_weight_path}/{weights}"))
-
+    
+    return epoch_start+1
 

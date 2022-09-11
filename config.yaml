@@ -1,17 +1,18 @@
 ---
-n_epochs: 200
+n_epochs: 1000
 batch_size: 256
-lr: 0.0002
+lr: 0.01
 n_cpu: 8
-latent_dim: 100
+latent_dim: 128
 img_size: 64
 img_channels: 3
-n_critic: 3
-sample_interval: 1000
-gen_weight_path: "ModelWeights/Gen/"
-disc_weight_path: "ModelWeights/Disc/"
-image_save_path: "Generated Images/"
-datafolder_path: "Data"
+n_critic: 5
+sample_interval: 500
+gen_weight_path: "ModelWeights/Faces/"
+disc_weight_path: "ModelWeights/Faces/"
+image_save_path: "Generated Images/Faces/"
+datafolder_path: "Data/Faces/"
 load_last_checkpoint: false
 wdiv_p_value: 6
 wdiv_k_value: 2
+use_conv: true

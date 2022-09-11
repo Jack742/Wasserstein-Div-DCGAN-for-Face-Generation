@@ -9,14 +9,15 @@ import torch.nn.functional as F
 import torch.autograd as autograd
 import torch
 
-from models import Generator, Discriminator
+from models import Generator, Discriminator, DCGenerator, DCDiscriminator
 import utils
 
 
 config = utils.read_config('config.yaml')
 pp = pprint.PrettyPrinter(indent=4)
 print("#############\nCONFIG LOADED\n#############\n")
-pp.pprint(config+ '\n')
+pp.pprint(config)
+print('\n')
 
 img_shape = (config['img_channels'], config['img_size'], config['img_size'])
 
@@ -28,10 +29,16 @@ p = config['wdiv_p_value']
 
 
 # Initialize generator and discriminator
-generator = Generator(config['latent_dim'], img_shape)
-discriminator = Discriminator(img_shape)
+if config['use_conv']:
+    print('Using ConvNet')
+    generator = DCGenerator(config['latent_dim'])
+    discriminator = DCDiscriminator(img_shape)
+else:
+    generator = Generator(config['latent_dim'], img_shape)
+    discriminator = Discriminator(img_shape)
 
 if cuda:
+    print('Using CUDA\n')
     generator.cuda()
     discriminator.cuda()
 
@@ -48,11 +55,6 @@ Tensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
 
 
 
-if config['load_last_checkpoint']:
-    utils.load_model_weights(generator, discriminator, \
-        config['gen_weight_path'],config['disc_weight_path'], config['sample_interval'])
-
-
 
 
 # ----------
@@ -61,6 +63,16 @@ if config['load_last_checkpoint']:
 
 epoch_start = 0
 batches_done = 0
+
+if config['load_last_checkpoint']:
+    #Load model weights and set epoch start and batches done to correct number
+    epoch_start = utils.load_model_weights(generator, discriminator, \
+        config['gen_weight_path'],config['disc_weight_path'], config['sample_interval'])
+    batches_done = (epoch_start*len(dataloader)) - ((epoch_start*len(dataloader)) % config['sample_interval'])
+    print(batches_done)
+
+
+
 
 for epoch in range(epoch_start,config['n_epochs']):
     for i, (imgs, _) in enumerate(dataloader):
@@ -133,11 +145,13 @@ for epoch in range(epoch_start,config['n_epochs']):
                 % (epoch, config['n_epochs'], i, len(dataloader), d_loss.item(), g_loss.item())
             )
 
-            if epoch % 30 == 0 or epoch ==config['n_epochs']-1:
+            if epoch % 50 == 0 or epoch ==config['n_epochs']-1:
                 torch.save(generator.state_dict(),config['gen_weight_path']+f'gen_weights_{epoch}')
                 torch.save(discriminator.state_dict(),config['disc_weight_path']+f'disc_weights_{epoch}')
 
             if batches_done % config['sample_interval'] == 0:
+                print("#####################\nSAVING SAMPLE IMAGES\n"+config['image_save_path']+f"%d.png"% batches_done+"\n#####################\n")
+                
                 save_image(fake_imgs.data[:25],config['image_save_path']+"%d.png" % batches_done,\
                      nrow=5, normalize=True)
 
