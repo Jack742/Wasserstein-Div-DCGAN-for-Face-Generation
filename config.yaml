@@ -15,4 +15,4 @@ datafolder_path: "Data/Faces/"
 load_last_checkpoint: false
 wdiv_p_value: 6
 wdiv_k_value: 2
-use_conv: true
+use_conv: false
